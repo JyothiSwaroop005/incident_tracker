@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Edit Incident{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Edit Incident</h1>
+    <p class="text-dim">#{{ incident.id }} · {{ incident.title }}</p>
+  </div>
+</div>
+
+<div class="form-card">
+  <form method="post" novalidate>
+    {{ form.hidden_tag() }}
+
+    <div class="form-group">
+      {{ form.title.label(class="form-label") }}
+      {{ form.title(class="form-control" + (" is-invalid" if form.title.errors else "")) }}
+      {% for error in form.title.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+    </div>
+
+    <div class="form-group">
+      {{ form.description.label(class="form-label") }}
+      {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else ""), rows=4) }}
+      {% for error in form.description.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        {{ form.severity.label(class="form-label") }}
+        {{ form.severity(class="form-select" + (" is-invalid" if form.severity.errors else "")) }}
+        {% for error in form.severity.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="form-group">
+        {{ form.status.label(class="form-label") }}
+        {{ form.status(class="form-select" + (" is-invalid" if form.status.errors else "")) }}
+        {% for error in form.status.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        {{ form.reported_by.label(class="form-label") }}
+        {{ form.reported_by(class="form-control") }}
+      </div>
+      <div class="form-group">
+        {{ form.assigned_to.label(class="form-label") }}
+        {{ form.assigned_to(class="form-control", placeholder="Unassigned") }}
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <a href="{{ url_for('incidents.incident_detail', incident_id=incident.id) }}" class="btn btn-outline-secondary">Cancel</a>
+      <button type="submit" class="btn btn-gradient">
+        <i class="bi bi-check2-circle"></i> Save Changes
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

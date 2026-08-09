@@ -1,0 +1,14 @@
+{% macro severity_badge(severity) -%}
+<span class="badge-pill sev-{{ severity }}">
+  <i class="bi bi-circle-fill"></i> {{ severity | capitalize }}
+</span>
+{%- endmacro %}
+
+{% macro status_badge(status) -%}
+<span class="badge-pill status-{{ status | replace(' ', '_') }}">
+  {% if status == 'resolved' %}<i class="bi bi-check-circle-fill"></i>
+  {% elif status == 'investigating' %}<i class="bi bi-search"></i>
+  {% else %}<i class="bi bi-exclamation-circle-fill"></i>{% endif %}
+  {{ status | capitalize }}
+</span>
+{%- endmacro %}

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}New Incident{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Report an Incident</h1>
+    <p class="text-dim">Get it logged, then get it fixed.</p>
+  </div>
+</div>
+
+<div class="form-card">
+  <form method="post" novalidate>
+    {{ form.hidden_tag() }}
+
+    <div class="form-group">
+      {{ form.title.label(class="form-label") }}
+      {{ form.title(class="form-control" + (" is-invalid" if form.title.errors else ""), placeholder="e.g. API latency spike in us-east-1", autofocus=true) }}
+      {% for error in form.title.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+    </div>
+
+    <div class="form-group">
+      {{ form.description.label(class="form-label") }}
+      {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else ""), rows=4, placeholder="What's happening? Impact, affected service, anything relevant…") }}
+      {% for error in form.description.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        {{ form.severity.label(class="form-label") }}
+        {{ form.severity(class="form-select" + (" is-invalid" if form.severity.errors else "")) }}
+        {% for error in form.severity.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="form-group">
+        {{ form.status.label(class="form-label") }}
+        {{ form.status(class="form-select" + (" is-invalid" if form.status.errors else "")) }}
+        {% for error in form.status.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        {{ form.reported_by.label(class="form-label") }}
+        {{ form.reported_by(class="form-control", placeholder="Your name") }}
+      </div>
+      <div class="form-group">
+        {{ form.assigned_to.label(class="form-label") }}
+        {{ form.assigned_to(class="form-control", placeholder="Optional") }}
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <a href="{{ url_for('incidents.incident_list') }}" class="btn btn-outline-secondary">Cancel</a>
+      <button type="submit" class="btn btn-gradient">
+        <i class="bi bi-check2-circle"></i> Create Incident
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

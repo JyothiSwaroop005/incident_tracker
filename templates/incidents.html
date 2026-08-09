@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% from "components/badges.html" import severity_badge, status_badge %}
+{% from "components/empty_state.html" import empty_state %}
+{% from "components/confirm_modal.html" import confirm_delete_modal %}
+
+{% block title %}Incidents{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Incidents</h1>
+    <p class="text-dim">{{ pagination.total }} total{% if args.get('q') or args.get('status') or args.get('severity') %} matching current filters{% endif %}</p>
+  </div>
+  <a href="{{ url_for('incidents.create_incident') }}" class="btn btn-gradient">
+    <i class="bi bi-plus-lg"></i> New Incident
+  </a>
+</div>
+
+<div class="filter-bar">
+  <form method="get" class="filter-form" id="filterForm">
+    <input type="text" name="q" value="{{ args.get('q', '') }}" placeholder="Search title or description…" class="filter-search">
+
+    <select name="status" class="filter-select" onchange="document.getElementById('filterForm').submit()">
+      <option value="">All statuses</option>
+      {% for s in statuses %}
+        <option value="{{ s }}" {{ 'selected' if args.get('status') == s }}>{{ s | capitalize }}</option>
+      {% endfor %}
+    </select>
+
+    <select name="severity" class="filter-select" onchange="document.getElementById('filterForm').submit()">
+      <option value="">All severities</option>
+      {% for s in severities %}
+        <option value="{{ s }}" {{ 'selected' if args.get('severity') == s }}>{{ s | capitalize }}</option>
+      {% endfor %}
+    </select>
+
+    <select name="sort" class="filter-select" onchange="document.getElementById('filterForm').submit()">
+      <option value="created_desc" {{ 'selected' if args.get('sort', 'created_desc') == 'created_desc' }}>Newest first</option>
+      <option value="created_asc" {{ 'selected' if args.get('sort') == 'created_asc' }}>Oldest first</option>
+      <option value="severity_desc" {{ 'selected' if args.get('sort') == 'severity_desc' }}>Severity: high → low</option>
+      <option value="severity_asc" {{ 'selected' if args.get('sort') == 'severity_asc' }}>Severity: low → high</option>
+    </select>
+
+    <button type="submit" class="btn btn-outline-secondary btn-sm">Apply</button>
+    {% if args.get('q') or args.get('status') or args.get('severity') or args.get('sort') %}
+      <a href="{{ url_for('incidents.incident_list') }}" class="btn btn-ghost btn-sm">Clear</a>
+    {% endif %}
+  </form>
+</div>
+
+{% if incidents %}
+<div class="table-card">
+  <table class="incident-table">
+    <thead>
+      <tr>
+        <th>Incident</th>
+        <th>Severity</th>
+        <th>Status</th>
+        <th>Assigned</th>
+        <th>Reported</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for incident in incidents %}
+      <tr class="incident-row" onclick="window.location='{{ url_for('incidents.incident_detail', incident_id=incident.id) }}'">
+        <td>
+          <div class="table-title">{{ incident.title }}</div>
+          <div class="table-sub">#{{ incident.id }} · by {{ incident.reported_by }}</div>
+        </td>
+        <td>{{ severity_badge(incident.severity) }}</td>
+        <td>{{ status_badge(incident.status) }}</td>
+        <td class="text-dim">{{ incident.assigned_to or '—' }}</td>
+        <td class="text-dim">{{ incident.created_at.strftime('%b %d, %Y') }}</td>
+        <td class="table-actions" onclick="event.stopPropagation()">
+          <div class="dropdown">
+            <button class="btn-icon" data-bs-toggle="dropdown" aria-label="Row actions">
+              <i class="bi bi-three-dots-vertical"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="{{ url_for('incidents.incident_detail', incident_id=incident.id) }}"><i class="bi bi-eye"></i> View</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('incidents.edit_incident', incident_id=incident.id) }}"><i class="bi bi-pencil"></i> Edit</a></li>
+              {% if incident.status != 'resolved' %}
+              <li>
+                <form method="post" action="{{ url_for('incidents.quick_resolve', incident_id=incident.id) }}">
+                  {{ delete_form.hidden_tag() }}
+                  <button type="submit" class="dropdown-item"><i class="bi bi-check-circle"></i> Mark resolved</button>
+                </form>
+              </li>
+              {% endif %}
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <button type="button" class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ incident.id }}">
+                  <i class="bi bi-trash3"></i> Delete
+                </button>
+              </li>
+            </ul>
+          </div>
+        </td>
+      </tr>
+      {{ confirm_delete_modal("deleteModal" ~ incident.id, incident.id, incident.title, delete_form) }}
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Pagination -->
+{% if pagination.pages > 1 %}
+<nav class="pagination-bar" aria-label="Incident pages">
+  <ul class="pagination">
+    <li class="page-item {{ 'disabled' if not pagination.has_prev }}">
+      <a class="page-link" href="{{ url_for('incidents.incident_list', page=pagination.prev_num, **filter_args) if pagination.has_prev else '#' }}">
+        <i class="bi bi-chevron-left"></i>
+      </a>
+    </li>
+    {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+      {% if p %}
+        <li class="page-item {{ 'active' if p == pagination.page }}">
+          <a class="page-link" href="{{ url_for('incidents.incident_list', page=p, **filter_args) }}">{{ p }}</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">…</span></li>
+      {% endif %}
+    {% endfor %}
+    <li class="page-item {{ 'disabled' if not pagination.has_next }}">
+      <a class="page-link" href="{{ url_for('incidents.incident_list', page=pagination.next_num, **filter_args) if pagination.has_next else '#' }}">
+        <i class="bi bi-chevron-right"></i>
+      </a>
+    </li>
+  </ul>
+</nav>
+{% endif %}
+
+{% else %}
+  {{ empty_state("No incidents found", "Try adjusting your search or filters — or report a new incident.", url_for('incidents.create_incident'), "Report an Incident") }}
+{% endif %}
+
+{% endblock %}

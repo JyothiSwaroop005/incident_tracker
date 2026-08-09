@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Dashboard{% endblock %} · Incident Tracker</title>
+
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+{% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<div class="bg-scene" aria-hidden="true">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="bg-noise"></div>
+</div>
+
+<div class="app-shell">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <span class="brand-mark"><i class="bi bi-activity"></i></span>
+      <span class="brand-text">Incident<strong>Tracker</strong></span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="{{ url_for('incidents.dashboard') }}" class="nav-link {{ 'active' if request.endpoint == 'incidents.dashboard' }}">
+        <i class="bi bi-grid-1x2-fill"></i><span>Dashboard</span>
+      </a>
+      <a href="{{ url_for('incidents.incident_list') }}" class="nav-link {{ 'active' if request.endpoint in ['incidents.incident_list', 'incidents.incident_detail'] }}">
+        <i class="bi bi-list-ul"></i><span>Incidents</span>
+      </a>
+      <a href="{{ url_for('incidents.create_incident') }}" class="nav-link {{ 'active' if request.endpoint == 'incidents.create_incident' }}">
+        <i class="bi bi-plus-circle-fill"></i><span>New Incident</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-status">
+        <span class="pulse-dot"></span> All systems reporting
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main-area">
+
+    <header class="topbar">
+      <button class="sidebar-toggle d-lg-none" id="sidebarToggle" aria-label="Toggle navigation">
+        <i class="bi bi-list"></i>
+      </button>
+
+      <form class="topbar-search" action="{{ url_for('incidents.incident_list') }}" method="get" role="search">
+        <i class="bi bi-search"></i>
+        <input type="text" name="q" placeholder="Search incidents…" value="{{ request.args.get('q', '') }}" aria-label="Search incidents">
+      </form>
+
+      <div class="topbar-actions">
+        <button type="button" class="topbar-icon-btn" aria-label="Notifications" data-bs-toggle="tooltip" title="Notifications">
+          <i class="bi bi-bell-fill"></i>
+          <span class="notif-dot"></span>
+        </button>
+        <a href="{{ url_for('incidents.create_incident') }}" class="btn btn-gradient">
+          <i class="bi bi-plus-lg"></i> New Incident
+        </a>
+        <span class="avatar-chip" data-bs-toggle="tooltip" title="On-call operator">OP</span>
+      </div>
+    </header>
+
+    <div class="content-area">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="toast-stack" id="toastStack">
+            {% for category, message in messages %}
+              <div class="toast-item toast-{{ category }}" role="alert">
+                <i class="bi {{ 'bi-check-circle-fill' if category == 'success' else 'bi-info-circle-fill' if category == 'info' else 'bi-exclamation-triangle-fill' }}"></i>
+                <span>{{ message }}</span>
+                <button type="button" class="toast-close" onclick="this.parentElement.remove()" aria-label="Dismiss">&times;</button>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

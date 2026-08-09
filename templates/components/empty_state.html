@@ -1,0 +1,26 @@
+{% macro empty_state(title, message, action_url=None, action_text=None) -%}
+<div class="empty-state">
+  <div class="empty-illustration">
+    <svg width="130" height="130" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="eg1" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#00E5FF"/>
+          <stop offset="100%" stop-color="#8B5CF6"/>
+        </linearGradient>
+      </defs>
+      <circle cx="60" cy="60" r="56" stroke="url(#eg1)" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="5 7"/>
+      <rect x="32" y="44" width="56" height="38" rx="8" fill="rgba(255,255,255,0.04)" stroke="url(#eg1)" stroke-opacity="0.5" stroke-width="1.5"/>
+      <path d="M32 58h56" stroke="url(#eg1)" stroke-opacity="0.4" stroke-width="1.5"/>
+      <circle cx="43" cy="51" r="2.2" fill="#FF4D6D"/>
+      <circle cx="52" cy="51" r="2.2" fill="#FBBF24"/>
+      <circle cx="61" cy="51" r="2.2" fill="#10B981"/>
+      <path d="M46 70l8 8 18-18" stroke="#00E5FF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+  <h3>{{ title }}</h3>
+  <p>{{ message }}</p>
+  {% if action_url %}
+    <a href="{{ action_url }}" class="btn btn-gradient">{{ action_text }}</a>
+  {% endif %}
+</div>
+{%- endmacro %}

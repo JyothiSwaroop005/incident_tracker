@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% from "components/badges.html" import severity_badge, status_badge %}
+{% from "components/confirm_modal.html" import confirm_delete_modal %}
+
+{% block title %}{{ incident.title }}{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-row">
+  <a href="{{ url_for('incidents.incident_list') }}"><i class="bi bi-arrow-left"></i> Back to incidents</a>
+</div>
+
+<div class="detail-card">
+  <div class="detail-header">
+    <div>
+      <div class="detail-badges">
+        {{ severity_badge(incident.severity) }}
+        {{ status_badge(incident.status) }}
+        <span class="detail-id">#{{ incident.id }}</span>
+      </div>
+      <h1>{{ incident.title }}</h1>
+    </div>
+    <div class="detail-actions">
+      <a href="{{ url_for('incidents.edit_incident', incident_id=incident.id) }}" class="btn btn-outline-secondary">
+        <i class="bi bi-pencil"></i> Edit
+      </a>
+      {% if incident.status != 'resolved' %}
+      <form method="post" action="{{ url_for('incidents.quick_resolve', incident_id=incident.id) }}">
+        {{ delete_form.hidden_tag() }}
+        <button type="submit" class="btn btn-success"><i class="bi bi-check-circle"></i> Mark Resolved</button>
+      </form>
+      {% endif %}
+      <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModalDetail">
+        <i class="bi bi-trash3"></i> Delete
+      </button>
+    </div>
+  </div>
+
+  <div class="detail-body">
+    <h3>Description</h3>
+    <p class="detail-description">{{ incident.description }}</p>
+  </div>
+
+  <div class="detail-meta-grid">
+    <div class="meta-item">
+      <span class="meta-label">Reported by</span>
+      <span class="meta-value"><i class="bi bi-person-circle"></i> {{ incident.reported_by }}</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Assigned to</span>
+      <span class="meta-value"><i class="bi bi-person-check"></i> {{ incident.assigned_to or 'Unassigned' }}</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Created</span>
+      <span class="meta-value"><i class="bi bi-calendar-event"></i> {{ incident.created_at.strftime('%b %d, %Y at %H:%M') }} UTC</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Last updated</span>
+      <span class="meta-value"><i class="bi bi-clock-history"></i> {{ incident.updated_at.strftime('%b %d, %Y at %H:%M') }} UTC</span>
+    </div>
+  </div>
+</div>
+
+{{ confirm_delete_modal("deleteModalDetail", incident.id, incident.title, delete_form) }}
+{% endblock %}

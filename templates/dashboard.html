@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+{% from "components/badges.html" import severity_badge, status_badge %}
+{% from "components/empty_state.html" import empty_state %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Mission Control</h1>
+    <p class="text-dim">Live overview of everything currently on fire (or not).</p>
+  </div>
+</div>
+
+<!-- Stat widgets -->
+<div class="stat-grid">
+  <div class="stat-card total">
+    <div class="stat-top">
+      <div class="stat-icon"><i class="bi bi-collection-fill"></i></div>
+    </div>
+    <div class="stat-number" data-count="{{ stats.total }}">0</div>
+    <div class="stat-label">Total Incidents</div>
+  </div>
+
+  <div class="stat-card open">
+    <div class="stat-top">
+      <div class="stat-icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
+      {% if stats.open > 0 %}<span class="stat-trend up">Active</span>{% endif %}
+    </div>
+    <div class="stat-number" data-count="{{ stats.open }}">0</div>
+    <div class="stat-label">Open</div>
+  </div>
+
+  <div class="stat-card pending">
+    <div class="stat-top">
+      <div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
+    </div>
+    <div class="stat-number" data-count="{{ stats.pending }}">0</div>
+    <div class="stat-label">Pending (Open + Investigating)</div>
+  </div>
+
+  <div class="stat-card critical">
+    <div class="stat-top">
+      <div class="stat-icon"><i class="bi bi-lightning-fill"></i></div>
+      {% if stats.critical > 0 %}<span class="stat-trend up">Watch</span>{% endif %}
+    </div>
+    <div class="stat-number" data-count="{{ stats.critical }}">0</div>
+    <div class="stat-label">Critical (Active)</div>
+  </div>
+
+  <div class="stat-card" style="--stat-glow:#F97316">
+    <div class="stat-top">
+      <div class="stat-icon"><i class="bi bi-fire"></i></div>
+    </div>
+    <div class="stat-number" data-count="{{ stats.high }}">0</div>
+    <div class="stat-label">High Severity</div>
+  </div>
+
+  <div class="stat-card" style="--stat-glow:#FBBF24">
+    <div class="stat-top">
+      <div class="stat-icon"><i class="bi bi-dash-circle-fill"></i></div>
+    </div>
+    <div class="stat-number" data-count="{{ stats.medium }}">0</div>
+    <div class="stat-label">Medium Severity</div>
+  </div>
+
+  <div class="stat-card resolved">
+    <div class="stat-top">
+      <div class="stat-icon"><i class="bi bi-check-circle-fill"></i></div>
+      {% if stats.resolved > 0 %}<span class="stat-trend down">Cleared</span>{% endif %}
+    </div>
+    <div class="stat-number" data-count="{{ stats.resolved }}">0</div>
+    <div class="stat-label">Resolved</div>
+  </div>
+
+  <div class="stat-card resolved-today">
+    <div class="stat-top">
+      <div class="stat-icon"><i class="bi bi-calendar-check-fill"></i></div>
+    </div>
+    <div class="stat-number" data-count="{{ stats.resolved_today }}">0</div>
+    <div class="stat-label">Resolved Today</div>
+  </div>
+</div>
+
+<div class="dashboard-grid-wide">
+
+  <!-- Weekly activity chart -->
+  <div class="panel-card">
+    <div class="panel-card-header">
+      <h2>Weekly Activity</h2>
+      <span class="text-dim" style="font-size:12px;">Last 7 days</span>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="weeklyChart" height="220"></canvas>
+    </div>
+  </div>
+
+  <!-- Severity chart -->
+  <div class="panel-card">
+    <div class="panel-card-header">
+      <h2>Severity Breakdown</h2>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="severityChart" height="220"></canvas>
+    </div>
+    <div class="chart-legend">
+      <span><i class="dot dot-critical"></i> Critical ({{ breakdown.critical }})</span>
+      <span><i class="dot dot-high"></i> High ({{ breakdown.high }})</span>
+      <span><i class="dot dot-medium"></i> Medium ({{ breakdown.medium }})</span>
+      <span><i class="dot dot-low"></i> Low ({{ breakdown.low }})</span>
+    </div>
+  </div>
+</div>
+
+<div class="dashboard-grid">
+
+  <!-- Status distribution -->
+  <div class="panel-card">
+    <div class="panel-card-header">
+      <h2>Status Distribution</h2>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="statusChart" height="200"></canvas>
+    </div>
+  </div>
+
+  <!-- Recent incidents -->
+  <div class="panel-card">
+    <div class="panel-card-header">
+      <h2>Recent Incidents</h2>
+      <a href="{{ url_for('incidents.incident_list') }}" class="link-arrow">View all <i class="bi bi-arrow-right"></i></a>
+    </div>
+
+    {% if recent %}
+      <div class="incident-mini-list">
+        {% for incident in recent %}
+        <a href="{{ url_for('incidents.incident_detail', incident_id=incident.id) }}" class="incident-mini-row">
+          <div class="mini-row-main">
+            <span class="sev-dot sev-dot-{{ incident.severity }}"></span>
+            <div>
+              <div class="mini-row-title">{{ incident.title }}</div>
+              <div class="mini-row-meta">#{{ incident.id }} · {{ incident.created_at.strftime('%b %d, %H:%M') }} UTC</div>
+            </div>
+          </div>
+          {{ status_badge(incident.status) }}
+        </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      {{ empty_state("No incidents yet", "Once something breaks, it'll show up here.", url_for('incidents.create_incident'), "Report an Incident") }}
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    animateCounters();
+
+    Chart.defaults.color = '#94A3B8';
+    Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
+
+    // Severity doughnut
+    const sevCtx = document.getElementById('severityChart');
+    if (sevCtx) {
+      new Chart(sevCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Critical', 'High', 'Medium', 'Low'],
+          datasets: [{
+            data: [{{ breakdown.critical }}, {{ breakdown.high }}, {{ breakdown.medium }}, {{ breakdown.low }}],
+            backgroundColor: ['#FF4D6D', '#F97316', '#FBBF24', '#3B82F6'],
+            borderColor: '#0A0F24',
+            borderWidth: 3,
+            hoverOffset: 8,
+          }]
+        },
+        options: {
+          cutout: '72%',
+          plugins: { legend: { display: false }, tooltip: { backgroundColor: '#0D1326', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, padding: 10 } },
+          animation: { animateScale: true, animateRotate: true }
+        }
+      });
+    }
+
+    // Status bar
+    const statusCtx = document.getElementById('statusChart');
+    if (statusCtx) {
+      new Chart(statusCtx, {
+        type: 'bar',
+        data: {
+          labels: ['Open', 'Investigating', 'Resolved'],
+          datasets: [{
+            data: [{{ status_breakdown.open }}, {{ status_breakdown.investigating }}, {{ status_breakdown.resolved }}],
+            backgroundColor: ['#FF4D6D', '#FBBF24', '#10B981'],
+            borderRadius: 8,
+            maxBarThickness: 46,
+          }]
+        },
+        options: {
+          plugins: { legend: { display: false }, tooltip: { backgroundColor: '#0D1326', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, padding: 10 } },
+          scales: {
+            x: { grid: { display: false }, ticks: { color: '#94A3B8' } },
+            y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { color: '#94A3B8', precision: 0 } }
+          }
+        }
+      });
+    }
+
+    // Weekly activity line
+    const weeklyCtx = document.getElementById('weeklyChart');
+    if (weeklyCtx) {
+      const gradient = weeklyCtx.getContext('2d').createLinearGradient(0, 0, 0, 220);
+      gradient.addColorStop(0, 'rgba(0,229,255,0.35)');
+      gradient.addColorStop(1, 'rgba(0,229,255,0)');
+      new Chart(weeklyCtx, {
+        type: 'line',
+        data: {
+          labels: {{ weekly.labels | tojson }},
+          datasets: [{
+            data: {{ weekly.counts | tojson }},
+            borderColor: '#00E5FF',
+            backgroundColor: gradient,
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: '#00E5FF',
+            pointBorderColor: '#0A0F24',
+            pointBorderWidth: 2,
+            pointRadius: 5,
+            pointHoverRadius: 7,
+          }]
+        },
+        options: {
+          plugins: { legend: { display: false }, tooltip: { backgroundColor: '#0D1326', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1, padding: 10 } },
+          scales: {
+            x: { grid: { display: false }, ticks: { color: '#94A3B8' } },
+            y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { color: '#94A3B8', precision: 0 } }
+          }
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}
