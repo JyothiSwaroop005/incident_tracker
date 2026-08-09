@@ -12,9 +12,11 @@ class Config:
     """Base Flask configuration."""
 
     SECRET_KEY: str = os.environ.get("SECRET_KEY", "dev-secret-key-change-in-production")
-    SQLALCHEMY_DATABASE_URI: str = os.environ.get(
-        "DATABASE_URL", f"sqlite:///{os.path.join(BASE_DIR, 'database.db')}"
-    )
+    _default_db = "sqlite:////tmp/database.db" if os.environ.get("VERCEL") else f"sqlite:///{os.path.join(BASE_DIR, 'database.db')}"
+    _db_url = os.environ.get("DATABASE_URL", _default_db)
+    if _db_url.startswith("postgres://"):
+        _db_url = _db_url.replace("postgres://", "postgresql://", 1)
+    SQLALCHEMY_DATABASE_URI: str = _db_url
     SQLALCHEMY_TRACK_MODIFICATIONS: bool = False
     WTF_CSRF_ENABLED: bool = True
 
