@@ -92,7 +92,7 @@ def _seed_if_empty() -> None:
             assigned_to=None,
         ),
     ]
-    db.session.bulk_save_objects(demo_incidents)
+    db.session.add_all(demo_incidents)
     db.session.commit()
 
 
